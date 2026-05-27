@@ -26,6 +26,6 @@ caddy run
 
 3. Enter website
 ```
-https://localhost
+http://localhost:5173/
 ```
  
