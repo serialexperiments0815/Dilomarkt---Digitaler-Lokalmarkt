@@ -1,5 +1,6 @@
 <template>
   <div class="dilomarkt-app">
+<<<<<<< HEAD
     <!-- 1. LANDING & SEARCH VIEW -->
     <div v-if="currentView === 'landing'" class="view-container">
       <header class="hero-section">
@@ -188,3 +189,12 @@ body {
   .products-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
 }
 </style>
+=======
+    <RouterView />
+    <nav class="mobile-bottom-nav">
+      <button :class="{ active: route.name === 'home' }" @click="router.push('/')">🏠<br>Start</button>
+      <button :class="{ active: route.name === 'search' }" @click="router.push('/suche')">🔍<br>Suche</button>
+    </nav>
+  </div>
+</template>
+>>>>>>> d534ca87a19998118e5b745e9071e0dbc057a1e7
