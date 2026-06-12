@@ -1,0 +1,8 @@
+localhost {
+    # Route all API requests to Laravel backend 
+    reverse_proxy /api/* 127.0.0.1:8000
+
+    # Route everything else to development server
+    reverse_proxy * 127.0.0.1:5173
+}
+
