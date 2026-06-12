@@ -1,31 +1,42 @@
-### Project for prototyping a commerce shop
-This project was made to develop team-work and full-stack expertise in web-development. 
-Following stack is used:
-* Server: PHP with Laravel-Framework
-* Database: MariaDB
-* Client: Vue.js (HTML, CSS, JavaScript)
-* Client-Server-Communikation via REST
-* Additional: Responsive Webdesign
+# Dilomarkt
 
-### Installation
-1. open CMD
-2. git clone https://github.com/serialexperiments0815/Dilomarkt---Digitaler-Lokalmarkt/
-3. cd Dilomarkt---Digitaler-Lokalmarkt/Dilomarkt
-4. npm install
+This template should help get you started developing with Vue 3 in Vite.
 
-### Usage
-1. From the 'Dilomarkt' folder to start development server
+## Recommended IDE Setup
+
+[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+
+## Recommended Browser Setup
+
+- Chromium-based browsers (Chrome, Edge, Brave, etc.):
+  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
+  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
+- Firefox:
+  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
+  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+
+## Type Support for `.vue` Imports in TS
+
+TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+
+## Customize configuration
+
+See [Vite Configuration Reference](https://vite.dev/config/).
+
+## Project Setup
+
+```sh
+npm install
 ```
+
+### Compile and Hot-Reload for Development
+
+```sh
 npm run dev
 ```
 
-2. caddy run to start local server
-```
-caddy run
-```
+### Type-Check, Compile and Minify for Production
 
-3. Enter website
+```sh
+npm run build
 ```
-http://localhost:5173/
-```
- 
