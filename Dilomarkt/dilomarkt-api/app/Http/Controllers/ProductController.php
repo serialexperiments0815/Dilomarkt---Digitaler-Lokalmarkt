@@ -82,6 +82,8 @@ class ProductController extends Controller {
             ->select('products.id', 'products.title', 'products.price', 'providers.name as provider')
             ->where('products.category', $product->category)
             ->where('products.id', '!=', $id)
+            ->where('products.provider_id', '!=', $product->provider_id)  // <- das fehlte
+            ->orderBy('products.price')
             ->get();
 
         return response()->json(['product' => $product, 'alternatives' => $alternatives]);
