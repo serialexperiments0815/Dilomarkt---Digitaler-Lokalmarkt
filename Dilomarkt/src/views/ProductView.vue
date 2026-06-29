@@ -24,6 +24,13 @@
         </div>
       </div>
       <div class="detail-sidebar">
+        <ChatModal
+          :open="chatOpen"
+          :product-id="product.id"
+          :product-title="product.title"
+          :provider-id="product.provider_id"
+          @close="chatOpen = false"
+        />
         <div class="seller-card" v-if="product">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
             <div class="seller-avatar">{{ product.initials }}</div>
@@ -34,7 +41,7 @@
           </div>
           <p style="font-size:13px;color:#aaa">📦 {{ product.address }}, {{ product.city }}</p>
           <div v-if="product.verified" style="font-size:12px;color:#4caf50;margin:8px 0">✅ Verifizierter Anbieter</div>
-          <button class="btn-action" @click="alert('Anfrage gesendet!')">✉️ Abholung anfragen</button>
+          <button class="btn-action" @click="chatOpen = true">✉️ Abholung anfragen</button>
           <button class="btn-action" style="background:#333;margin-top:8px" @click="router.push(`/anbieter/${product.provider_id}`)">Alle Angebote ansehen</button>
         </div>
       </div>
@@ -54,6 +61,10 @@ const router = useRouter()
 const product = ref(null)
 const alternatives = ref([])
 const loading = ref(true)
+
+import ChatModal from '@/views/ChatModal.vue'
+const chatOpen = ref(false)
+
 const error = ref('')
 
 onMounted(async () => {
