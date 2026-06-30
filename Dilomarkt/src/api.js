@@ -78,6 +78,14 @@ async function authFetch(url, payload) {
   return data
 }
 
+export async function fetchMyConversations(role = 'buyer') {
+  const res = await fetch(`${BASE}/my-conversations?role=${role}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('dilomarkt_token')}` }
+  })
+  if (!res.ok) throw new Error('Fehler beim Laden der Chats')
+  return res.json()
+}
+
 export const registerUser   = (p) => authFetch(`${BASE}/auth/register`, p)
 export const verifyUser     = (p) => authFetch(`${BASE}/auth/verify`, p)
 export const loginUser      = (p) => authFetch(`${BASE}/auth/login`, p)

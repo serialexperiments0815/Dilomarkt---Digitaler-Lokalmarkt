@@ -8,19 +8,18 @@ return new class extends Migration {
         Schema::create('providers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('initials', 4);
-            $table->string('address');
-            $table->string('city');
-            $table->string('zip', 10);
-            $table->decimal('lat', 10, 7);
-            $table->decimal('lng', 10, 7);
-            $table->enum('type', ['Fachhandel', 'Baumarkt']);
-            $table->unsignedSmallInteger('since');
-            $table->boolean('verified')->default(false);
+            $table->string('initials')->nullable();
+            $table->string('address')->nullable();
+            $table->string('city')->nullable();
+            $table->string('zip')->nullable();
+            $table->double('lat')->nullable();
+            $table->double('lng')->nullable();
+            $table->string('type')->nullable();
+            $table->integer('since')->nullable();
+            $table->boolean('verified')->default(0);
             $table->timestamps();
         });
     }
-
     public function down(): void {
         Schema::dropIfExists('providers');
     }

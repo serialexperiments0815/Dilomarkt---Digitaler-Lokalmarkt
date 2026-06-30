@@ -5,7 +5,7 @@
     <header class="top-header">
       <span class="top-logo" @click="router.push('/')">Dilomarkt</span>
       <div class="top-right">
-        <!-- Not logged in -->
+        <!-- Not logged in --> 
         <template v-if="!user">
           <button class="btn-primary top-btn" @click="router.push('/login')">Anmelden</button>
           <button class="top-btn-outline" @click="router.push('/register')">Registrieren</button>
@@ -17,11 +17,11 @@
             <div class="dropdown-name">{{ user.first_name }} {{ user.last_name }}</div>
             <div class="dropdown-role">{{ user.role === 'seller' ? 'Verkäufer' : 'Käufer' }}</div>
             <hr class="dropdown-divider" />
-            <button @click="goTo('/profil')">👤 Mein Profil</button>
-            <button v-if="user.role === 'seller'" @click="goTo('/mein-shop')">🏪 Mein Shop</button>
-            <button @click="goTo('/bestellungen')">📦 Meine Bestellungen</button>
-            <hr class="dropdown-divider" />
-            <button class="dropdown-logout" @click="logout">🚪 Abmelden</button>
+<button @click="goTo('/chats')">💬 Meine Chats</button>
+<button @click="goTo('/profil')">👤 Mein Profil</button>
+<button v-if="user.role === 'seller'" @click="goTo('/mein-shop')">🏪 Mein Shop</button>
+<button @click="goTo('/bestellungen')">📦 Meine Bestellungen</button>
+<button class="dropdown-logout" @click="logout">🚪 Abmelden</button>
           </div>
         </div>
       </div>

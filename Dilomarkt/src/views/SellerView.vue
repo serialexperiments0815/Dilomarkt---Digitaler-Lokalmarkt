@@ -113,6 +113,7 @@
         Noch keine Produkte. Füge dein erstes Angebot hinzu.
       </div>
 
+   
       <!-- Product rows -->
       <div v-for="p in products" :key="p.id" class="product-row">
         <span class="product-icon-cell">{{ p.icon }}</span>
@@ -126,58 +127,8 @@
         </div>
       </div>
     </section>
-
-    <!-- ── MESSAGES SECTION ──────────────────────────── -->
-    <section v-if="shop" class="seller-section">
-      <div class="section-head">
-        <h3>Nachrichten <span class="count-badge">{{ conversations.length }}</span></h3>
-        <button v-if="activeConv" class="btn-sm" @click="activeConv = null">← Zurück</button>
-      </div>
-
-      <!-- Conversation list -->
-      <template v-if="!activeConv">
-        <div v-if="conversations.length === 0" class="empty-hint">Noch keine Nachrichten von Käufern.</div>
-        <div v-for="c in conversations" :key="`${c.product_id}_${c.buyer_id}`"
-             class="conv-row" @click="openConversation(c)">
-          <div class="conv-info">
-            <strong>{{ c.buyer_name }}</strong>
-            <div class="meta">{{ c.product_title }}</div>
-            <div class="conv-preview">{{ c.last_message }}</div>
-          </div>
-          <span style="color:#555;font-size:20px">›</span>
-        </div>
-      </template>
-
-      <!-- Thread view -->
-      <template v-else>
-        <div class="thread-header">
-          <strong>{{ activeConv.buyer_name }}</strong>
-          <div class="meta">{{ activeConv.product_title }}</div>
-        </div>
-        <div v-if="threadLoading" style="color:#aaa;padding:12px">Lädt...</div>
-        <div v-else class="thread-messages" ref="threadEl">
-          <div v-if="threadMessages.length === 0" class="empty-hint">Keine Nachrichten.</div>
-          <div v-for="m in threadMessages" :key="m.id"
-               :class="['bubble', m.sender === 'buyer' ? 'bubble-buyer' : 'bubble-seller']">
-            <span>{{ m.body }}</span>
-            <small>{{ new Date(m.created_at).toLocaleString('de-DE') }}</small>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <textarea v-model="replyDraft" rows="2" placeholder="Antwort schreiben…" class="reply-input"
-                    @keydown.enter.exact.prevent="sendReply" />
-          <button class="btn-primary" @click="sendReply"
-                  :disabled="replySending || !replyDraft.trim()"
-                  style="align-self:flex-end;padding:10px 16px">
-            {{ replySending ? '…' : '➤' }}
-          </button>
-        </div>
-        <small style="color:#555;font-size:11px">Enter zum Senden</small>
-      </template>
-    </section>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
@@ -185,9 +136,7 @@ import { useAuth } from '@/useAuth.js'
 import {
   getSellerShop, saveSellerShop,
   addSellerProduct, updateSellerProduct, deleteSellerProduct,
-  getSellerMessages,
 } from '@/api.js'
-import { fetchMessages, sendMessage } from '@/api.js'
 
 const CATEGORIES = ['Baumaterial', 'Werkzeug', 'Holz & Platten', 'Farben & Lacke', 'Sanitär', 'Elektro']
 const CACHE_KEY = 'dilomarkt_seller_shop'
@@ -219,15 +168,6 @@ const showProductForm    = ref(false)
 const editingProductId   = ref(null)
 const productForm        = ref({ title: '', price: '', category: 'Baumaterial', stock: 1, description: '', icon: '📦' })
 
-// ── Messages ─────────────────────────────────────────────────────────────────
-const conversations   = ref([])
-const activeConv      = ref(null)
-const threadMessages  = ref([])
-const replyDraft      = ref('')
-const threadLoading   = ref(false)
-const replySending    = ref(false)
-const threadEl        = ref(null)
-
 onMounted(async () => {
   if (!user.value || user.value.role !== 'seller') { router.push('/'); return }
   await loadShop()
@@ -242,7 +182,6 @@ async function loadShop() {
     if (data.shop) populateShopForm(data.shop)
     // Persist to cache so next visit is instant
     localStorage.setItem(CACHE_KEY, JSON.stringify({ shop: data.shop, products: data.products }))
-    if (data.shop) await loadConversations()
   } finally {
     loading.value = false
   }
@@ -305,46 +244,6 @@ async function removeProduct(id) {
     products.value = products.value.filter(p => p.id !== id)
     showMsg('Produkt gelöscht.', false)
   } catch (e) { showMsg(e.message, true) }
-}
-
-async function loadConversations() {
-  try {
-    const data = await getSellerMessages()
-    conversations.value = data.conversations
-  } catch { /* silent */ }
-}
-
-async function openConversation(c) {
-  activeConv.value  = c
-  replyDraft.value  = ''
-  threadLoading.value = true
-  try {
-    threadMessages.value = await fetchMessages(c.product_id, c.buyer_id)
-    await nextTick()
-    if (threadEl.value) threadEl.value.scrollTop = threadEl.value.scrollHeight
-  } finally {
-    threadLoading.value = false
-  }
-}
-
-async function sendReply() {
-  if (!replyDraft.value.trim() || replySending.value) return
-  replySending.value = true
-  try {
-    await sendMessage({
-      product_id:  activeConv.value.product_id,
-      provider_id: shop.value.id,
-      buyer_id:    activeConv.value.buyer_id,
-      sender:      'seller',
-      body:        replyDraft.value.trim(),
-    })
-    replyDraft.value = ''
-    threadMessages.value = await fetchMessages(activeConv.value.product_id, activeConv.value.buyer_id)
-    await nextTick()
-    if (threadEl.value) threadEl.value.scrollTop = threadEl.value.scrollHeight
-  } finally {
-    replySending.value = false
-  }
 }
 
 function showMsg(text, isError) {

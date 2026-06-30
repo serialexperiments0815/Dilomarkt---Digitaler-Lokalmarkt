@@ -65,27 +65,36 @@ class ProductController extends Controller {
         return response()->json($results);
     }
 
-    public function show(int $id) {
-        $product = DB::table('products')
-            ->join('providers', 'products.provider_id', '=', 'providers.id')
-            ->select('products.*', 'providers.name as provider', 'providers.id as provider_id',
-                     'providers.address', 'providers.city', 'providers.zip',
-                     'providers.type as provider_type', 'providers.verified',
-                     'providers.since', 'providers.initials')
-            ->where('products.id', $id)
-            ->first();
+    public function show(int $id)
+{
+    $product = DB::table('products')
+        ->join('providers', 'products.provider_id', '=', 'providers.id')
+        ->where('products.id', $id)
+        ->select(
+            'products.id as id',
+            'products.title', 'products.price', 'products.icon', 'products.category',
+            'products.description', 'products.stock', 'products.provider_id',
+            'providers.name as provider', 'providers.type as provider_type',
+            'providers.address', 'providers.city', 'providers.verified', 'providers.initials'
+        )
+        ->first();
 
-        if (!$product) return response()->json(['error' => 'Not found'], 404);
-
-        $alternatives = DB::table('products')
-            ->join('providers', 'products.provider_id', '=', 'providers.id')
-            ->select('products.id', 'products.title', 'products.price', 'providers.name as provider')
-            ->where('products.category', $product->category)
-            ->where('products.id', '!=', $id)
-            ->where('products.provider_id', '!=', $product->provider_id)  // <- das fehlte
-            ->orderBy('products.price')
-            ->get();
-
-        return response()->json(['product' => $product, 'alternatives' => $alternatives]);
+    if (!$product) {
+        return response()->json(['message' => 'Produkt nicht gefunden.'], 404);
     }
+
+    $coreWord = explode(' ', trim($product->title))[0];
+
+    $alternatives = DB::table('products')
+        ->join('providers', 'products.provider_id', '=', 'providers.id')
+        ->select('products.id', 'products.title', 'products.price', 'providers.name as provider')
+        ->where('products.category', $product->category)
+        ->where('products.id', '!=', $id)
+        ->where('products.provider_id', '!=', $product->provider_id)
+        ->where('products.title', 'like', "%{$coreWord}%")
+        ->orderBy('products.price')
+        ->get();
+
+    return response()->json(['product' => $product, 'alternatives' => $alternatives]);
+}
 }

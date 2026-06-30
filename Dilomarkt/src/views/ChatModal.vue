@@ -8,7 +8,7 @@
 
       <div class="message-list" ref="listEl">
         <div v-if="loading" style="color:#aaa;font-size:13px">Lädt...</div>
-        <div v-for="m in messages" :key="m.id" :class="['msg', m.sender === 'buyer' ? 'msg-buyer' : 'msg-seller']">
+        <div v-for="m in messages" :key="m.id" :class="['msg', isOwnMessage(m) ? 'msg-own' : 'msg-other']">
           <span>{{ m.body }}</span>
           <small>{{ m.created_at }}</small>
         </div>
@@ -43,11 +43,13 @@ const props = defineProps({
   productId: [String, Number],
   productTitle: String,
   providerId: [String, Number],
+  buyerId: [String, Number],
 })
 defineEmits(['close'])
 
 const { user } = useAuth()
-const buyerId = () => user.value?.id ?? null
+const resolvedBuyerId = () => props.buyerId ?? user.value?.id ?? null
+
 
 const messages = ref([])
 const draft = ref('')
@@ -58,11 +60,15 @@ const listEl = ref(null)
 
 let pollInterval = null
 
+function isOwnMessage(m) {
+  return m.sender === (user.value?.role === 'seller' ? 'seller' : 'buyer')
+}
+
 async function loadMessages() {
-  if (!buyerId()) return
+  if (!resolvedBuyerId()) return
   loading.value = true
   try {
-    messages.value = await fetchMessages(props.productId, buyerId())
+    messages.value = await fetchMessages(props.productId, resolvedBuyerId())
     await nextTick()
     if (listEl.value) listEl.value.scrollTop = listEl.value.scrollHeight
   } catch (e) {
@@ -72,6 +78,7 @@ async function loadMessages() {
   }
 }
 
+
 async function send() {
   if (!draft.value.trim() || sending.value) return
   sending.value = true
@@ -80,8 +87,8 @@ async function send() {
     await sendMessage({
       product_id: props.productId,
       provider_id: props.providerId,
-      buyer_id: buyerId(),
-      sender: 'buyer',
+      buyer_id: resolvedBuyerId(),
+      sender: user.value?.role === 'seller' ? 'seller' : 'buyer',
       body: draft.value.trim(),
     })
     draft.value = ''
@@ -93,6 +100,7 @@ async function send() {
   }
 }
 
+
 watch(() => props.open, (val) => {
   if (val) {
     loadMessages()
@@ -102,7 +110,8 @@ watch(() => props.open, (val) => {
     messages.value = []
     error.value = ''
   }
-})
+}, { immediate: true })
+
 </script>
 
 <style scoped>
@@ -120,6 +129,6 @@ watch(() => props.open, (val) => {
 }
 .msg { display: flex; flex-direction: column; max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 14px; }
 .msg small { font-size: 10px; color: #666; margin-top: 4px; }
-.msg-buyer { align-self: flex-end; background: #1565c0; }
-.msg-seller { align-self: flex-start; background: #2a2a2a; border: 1px solid #333; }
+.msg-own { align-self: flex-end; background: #1565c0; }
+.msg-other { align-self: flex-start; background: #2a2a2a; border: 1px solid #333; }
 </style>

@@ -14,10 +14,10 @@
         <div class="comparison-box">
           <h3 style="margin-top:0">Preisvergleich</h3>
           <div class="comparison-row active">
-            <span>{{ product.provider }}</span><strong>{{ product.price }} €</strong>
+            <span>{{ product.title }} – {{ product.provider }}</span><strong>{{ product.price }} €</strong>
           </div>
           <div class="comparison-row" v-for="a in alternatives" :key="a.id">
-            <span style="cursor:pointer;color:var(--primary-accent)" @click="router.push(`/produkt/${a.id}`)">{{ a.provider }}</span>
+            <span style="cursor:pointer;color:var(--primary-accent)" @click="router.push(`/produkt/${a.id}`)">{{ a.title }} – {{ a.provider }}</span>
             <strong>{{ a.price }} €</strong>
           </div>
           <div v-if="!alternatives.length" style="color:#666;font-size:13px;padding-top:8px">Keine weiteren Angebote.</div>
@@ -50,32 +50,40 @@
   <div v-else-if="loading" class="view-container" style="color:#aaa">Lädt...</div>
   <div v-else class="view-container" style="color:#f44336">{{ error || 'Produkt nicht gefunden.' }}</div>
 </template>
-
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchProduct } from '@/api.js'
+import ChatModal from '@/views/ChatModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const product = ref(null)
 const alternatives = ref([])
 const loading = ref(true)
-
-import ChatModal from '@/views/ChatModal.vue'
+const error = ref('')
 const chatOpen = ref(false)
 
-const error = ref('')
-
-onMounted(async () => {
+async function loadProduct(id) {
+  loading.value = true
+  error.value = ''
   try {
-    const data = await fetchProduct(route.params.id)
+    const data = await fetchProduct(id)
     product.value = data.product
     alternatives.value = data.alternatives
   } catch (e) {
     error.value = e.message
   } finally {
     loading.value = false
+  }
+}
+
+onMounted(() => loadProduct(route.params.id))
+
+watch(() => route.params.id, (newId) => {
+  if (newId) {
+    loadProduct(newId)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 })
 </script>

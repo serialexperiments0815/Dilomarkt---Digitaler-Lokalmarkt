@@ -26,3 +26,5 @@ Route::post('/seller/products',         [SellerController::class, 'addProduct'])
 Route::put('/seller/products/{id}',     [SellerController::class, 'updateProduct']);
 Route::delete('/seller/products/{id}',  [SellerController::class, 'deleteProduct']);
 Route::get('/seller/messages',          [SellerController::class, 'getMessages']);
+
+Route::get('/my-conversations', [MessageController::class, 'myConversations']);
