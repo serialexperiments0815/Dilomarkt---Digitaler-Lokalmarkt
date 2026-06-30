@@ -2,28 +2,28 @@
   <div class="view-container">
     <div class="search-container" style="max-width:100%;margin-bottom:16px">
       <input v-model="q" @keyup.enter="load" placeholder="Suchen..." />
-      <select v-model="cat" @change="load">
+      <select v-model="cat">
         <option value="">Alle Kategorien</option>
         <option v-for="c in CATEGORIES" :key="c">{{ c }}</option>
       </select>
-      <input v-model="plz" class="location-input" placeholder="PLZ" @change="load" />
+      <input v-model="plz" class="location-input" placeholder="PLZ" @change="load" @keyup.enter="load" />
       <button class="btn-primary" @click="load">Suchen</button>
     </div>
 
     <div class="category-chips">
-      <span :class="['chip', !cat && 'active']" @click="cat='';load()">Alle</span>
-      <span v-for="c in CATEGORIES" :key="c" :class="['chip', cat===c && 'active']" @click="cat=c;load()">{{ c }}</span>
+      <span :class="['chip', !cat && 'active']" @click="cat=''">Alle</span>
+      <span v-for="c in CATEGORIES" :key="c" :class="['chip', cat===c && 'active']" @click="cat=c">{{ c }}</span>
     </div>
 
     <div class="marketplace-body">
       <aside class="filter-sidebar">
         <h3>UMKREIS</h3>
-        <label v-for="r in [5,10,20,50]" :key="r"><input type="radio" v-model="radius" :value="r" @change="load" /> {{ r }} km</label>
+        <label v-for="r in [5,10,20,50]" :key="r"><input type="radio" v-model="radius" :value="r" /> {{ r }} km</label>
         <h3>ANBIETERTYP</h3>
-        <label><input type="checkbox" v-model="types" value="Fachhandel" @change="load" /> Fachhandel</label>
-        <label><input type="checkbox" v-model="types" value="Baumarkt" @change="load" /> Baumarkt</label>
+        <label><input type="checkbox" v-model="types" value="Fachhandel" /> Fachhandel</label>
+        <label><input type="checkbox" v-model="types" value="Baumarkt" /> Baumarkt</label>
         <h3>PREIS BIS</h3>
-        <input type="range" v-model="maxPrice" min="1" max="500" style="width:100%" @change="load" />
+        <input type="range" v-model="maxPrice" min="1" max="500" style="width:100%" />
         <span style="font-size:13px">max. {{ maxPrice }} €</span>
       </aside>
       <main style="flex:1">
@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchProducts } from '@/api.js'
 
@@ -69,17 +69,33 @@ const plz      = ref(route.query.plz ?? '42103')
 const radius   = ref(20)
 const maxPrice = ref(500)
 const types    = ref([])
-const products = ref([])
+const allProducts = ref([])
 const loading  = ref(false)
 const error    = ref('')
+
+// All filtering is client-side — instant, no network round-trip per filter change
+const products = computed(() => {
+  let list = allProducts.value
+  list = list.filter(p => p.distance <= Number(radius.value))
+  if (cat.value)          list = list.filter(p => p.category === cat.value)
+  if (types.value.length) list = list.filter(p => types.value.includes(p.provider_type))
+  if (Number(maxPrice.value) < 500) list = list.filter(p => p.price <= Number(maxPrice.value))
+  if (q.value.trim()) {
+    const sq = q.value.trim().toLowerCase()
+    list = list.filter(p =>
+      p.title?.toLowerCase().includes(sq) ||
+      p.provider?.toLowerCase().includes(sq)
+    )
+  }
+  return list
+})
 
 async function load() {
   loading.value = true
   error.value = ''
   try {
-    const params = { plz: plz.value, radius: radius.value, q: q.value, category: cat.value, max_price: maxPrice.value }
-    if (types.value.length === 1) params.type = types.value[0]
-    products.value = await fetchProducts(params)
+    // Fetch broad dataset once; client-side computed handles the rest
+    allProducts.value = await fetchProducts({ plz: plz.value, radius: 50 })
     router.replace({ query: { q: q.value, cat: cat.value, plz: plz.value } })
   } catch (e) {
     error.value = e.message
@@ -88,10 +104,10 @@ async function load() {
   }
 }
 
-watch(() => route.query, q => {
-  q.value  = route.query.q   ?? ''
-  cat.value = route.query.cat ?? ''
-  load()
+// Sync q/cat from route params (no reload — computed handles it)
+watch(() => route.query, (newQ) => {
+  q.value   = newQ.q   ?? ''
+  cat.value = newQ.cat ?? ''
 })
 
 onMounted(load)

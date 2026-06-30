@@ -36,6 +36,7 @@
 <script setup>
 import { ref, watch, nextTick } from 'vue'
 import { fetchMessages, sendMessage } from '@/api.js'
+import { useAuth } from '@/useAuth.js'
 
 const props = defineProps({
   open: Boolean,
@@ -45,8 +46,8 @@ const props = defineProps({
 })
 defineEmits(['close'])
 
-// Hardcoded buyer_id=1 bis Auth fertig ist
-const BUYER_ID = 1
+const { user } = useAuth()
+const buyerId = () => user.value?.id ?? null
 
 const messages = ref([])
 const draft = ref('')
@@ -58,9 +59,10 @@ const listEl = ref(null)
 let pollInterval = null
 
 async function loadMessages() {
+  if (!buyerId()) return
   loading.value = true
   try {
-    messages.value = await fetchMessages(props.productId, BUYER_ID)
+    messages.value = await fetchMessages(props.productId, buyerId())
     await nextTick()
     if (listEl.value) listEl.value.scrollTop = listEl.value.scrollHeight
   } catch (e) {
@@ -78,7 +80,7 @@ async function send() {
     await sendMessage({
       product_id: props.productId,
       provider_id: props.providerId,
-      buyer_id: BUYER_ID,
+      buyer_id: buyerId(),
       sender: 'buyer',
       body: draft.value.trim(),
     })

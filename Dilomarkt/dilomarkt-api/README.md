@@ -57,3 +57,33 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## SMTP Setup for Real Verification Emails
+
+To deliver verification and password-reset emails to real inboxes (Gmail, Outlook, Yahoo, etc.), configure a real SMTP provider in `.env`.
+
+Required `.env` values:
+
+- `MAIL_MAILER=smtp`
+- `MAIL_HOST=<your-smtp-host>`
+- `MAIL_PORT=587`
+- `MAIL_USERNAME=<your-smtp-username>`
+- `MAIL_PASSWORD=<your-smtp-password>`
+- `MAIL_ENCRYPTION=tls`
+- `MAIL_FROM_ADDRESS=<verified-sender@your-domain>`
+- `MAIL_FROM_NAME="Dilomarkt"`
+- `QUEUE_CONNECTION=sync`
+
+After changing `.env`, run:
+
+```bash
+php artisan config:clear
+```
+
+Then test by registering with a real address and requesting password reset.
+
+Important:
+
+- SMTP credentials must belong to a provider that allows outbound mail to external domains.
+- Use a verified sender address from that provider.
+- Delivery can still be filtered by recipient spam rules; verify SPF/DKIM for best inbox placement.

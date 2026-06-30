@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchProducts } from '@/api.js'
 
@@ -62,15 +62,24 @@ const plz = ref('42103')
 const cat = ref('')
 const radius = ref(10)
 const types = ref([])
-const products = ref([])
+const allProducts = ref([])
 const loading = ref(false)
 const error = ref('')
+
+// All filtering is client-side — no API call on every filter change
+const products = computed(() => {
+  let list = allProducts.value
+  if (radius.value < 20) list = list.filter(p => p.distance <= radius.value)
+  if (cat.value)         list = list.filter(p => p.category === cat.value)
+  if (types.value.length) list = list.filter(p => types.value.includes(p.provider_type))
+  return list
+})
 
 async function load() {
   loading.value = true
   error.value = ''
   try {
-    products.value = await fetchProducts({ plz: plz.value, radius: radius.value, q: q.value, category: cat.value })
+    allProducts.value = await fetchProducts({ plz: plz.value, radius: 20 })
   } catch (e) {
     error.value = e.message
   } finally {
@@ -78,7 +87,6 @@ async function load() {
   }
 }
 
-watch([radius, cat], load)
 onMounted(load)
 
 function doSearch() {

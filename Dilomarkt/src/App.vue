@@ -1,7 +1,34 @@
 <template>
   <div class="dilomarkt-app">
+
+    <!-- Top header -->
+    <header class="top-header">
+      <span class="top-logo" @click="router.push('/')">Dilomarkt</span>
+      <div class="top-right">
+        <!-- Not logged in -->
+        <template v-if="!user">
+          <button class="btn-primary top-btn" @click="router.push('/login')">Anmelden</button>
+          <button class="top-btn-outline" @click="router.push('/register')">Registrieren</button>
+        </template>
+        <!-- Logged in: avatar -->
+        <div v-else class="avatar-wrapper" ref="avatarRef">
+          <button class="avatar-btn" @click="toggleDropdown">{{ initials }}</button>
+          <div v-if="dropdownOpen" class="avatar-dropdown">
+            <div class="dropdown-name">{{ user.first_name }} {{ user.last_name }}</div>
+            <div class="dropdown-role">{{ user.role === 'seller' ? 'Verkäufer' : 'Käufer' }}</div>
+            <hr class="dropdown-divider" />
+            <button @click="goTo('/profil')">👤 Mein Profil</button>
+            <button v-if="user.role === 'seller'" @click="goTo('/mein-shop')">🏪 Mein Shop</button>
+            <button @click="goTo('/bestellungen')">📦 Meine Bestellungen</button>
+            <hr class="dropdown-divider" />
+            <button class="dropdown-logout" @click="logout">🚪 Abmelden</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
     <RouterView />
-    
+
     <nav class="mobile-bottom-nav">
       <button :class="{ active: route.name === 'home' }" @click="router.push('/')">🏠<br>Start</button>
       <button :class="{ active: route.name === 'search' }" @click="router.push('/suche')">🔍<br>Suche</button>
@@ -10,9 +37,47 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuth } from '@/useAuth.js'
+
 const route = useRoute()
 const router = useRouter()
+const dropdownOpen = ref(false)
+const avatarRef = ref<HTMLElement | null>(null)
+
+const { user, setUser } = useAuth()
+
+const initials = computed(() => {
+  if (!user.value) return ''
+  const f = (user.value.first_name ?? '').charAt(0).toUpperCase()
+  const l = (user.value.last_name ?? '').charAt(0).toUpperCase()
+  return f + l
+})
+
+function toggleDropdown() {
+  dropdownOpen.value = !dropdownOpen.value
+}
+
+function goTo(path: string) {
+  dropdownOpen.value = false
+  router.push(path)
+}
+
+function logout() {
+  dropdownOpen.value = false
+  setUser(null)
+  router.push('/')
+}
+
+function handleOutsideClick(e: MouseEvent) {
+  if (avatarRef.value && !avatarRef.value.contains(e.target as Node)) {
+    dropdownOpen.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('click', handleOutsideClick))
+onBeforeUnmount(() => document.removeEventListener('click', handleOutsideClick))
 </script>
 
 <style>
@@ -84,4 +149,49 @@ body {
   .products-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
   .profile-stats { flex-wrap: wrap; }
 }
+
+.dashboard-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.dashboard-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:16px; }
+.dashboard-card { background: var(--bg-dark-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 18px; }
+.dashboard-actions { display:flex; flex-wrap:wrap; gap:10px; }
+
+/* Top header */
+.top-header { position: sticky; top: 0; z-index: 200; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; height: 56px; background: #1a1a1a; border-bottom: 1px solid var(--border-color); }
+.top-logo { font-size: 18px; font-weight: bold; color: var(--primary-accent); cursor: pointer; letter-spacing: 0.5px; }
+.top-right { display: flex; align-items: center; gap: 10px; }
+.top-btn { padding: 7px 14px; font-size: 13px; }
+.top-btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 7px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+.top-btn-outline:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
+
+/* Avatar & dropdown */
+.avatar-wrapper { position: relative; }
+.avatar-btn { width: 38px; height: 38px; border-radius: 50%; background: var(--primary-accent); border: none; color: white; font-weight: bold; font-size: 14px; cursor: pointer; }
+.avatar-dropdown { position: absolute; right: 0; top: 48px; background: #1e1e1e; border: 1px solid var(--border-color); border-radius: 10px; width: 210px; padding: 12px 0; box-shadow: 0 8px 24px rgba(0,0,0,.4); z-index: 300; }
+.dropdown-name { padding: 4px 16px; font-weight: bold; font-size: 14px; }
+.dropdown-role { padding: 2px 16px 8px; font-size: 12px; color: #888; }
+.dropdown-divider { border: none; border-top: 1px solid var(--border-color); margin: 4px 0; }
+.avatar-dropdown button { display: block; width: 100%; text-align: left; background: transparent; border: none; color: var(--text-main); padding: 10px 16px; font-size: 14px; cursor: pointer; }
+.avatar-dropdown button:hover { background: #2a2a2a; }
+.dropdown-logout { color: #ef5350 !important; }
+
+.view-container { max-width: 1200px; margin: 0 auto; padding: 20px; padding-bottom: 90px; padding-top: 20px; }
+.auth-shell { display: flex; justify-content: center; align-items: center; min-height: 80vh; }
+.auth-card { background: var(--bg-dark-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; width: min(100%, 480px); box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+.auth-card h2 { margin-top: 0; }
+.auth-subtitle { color: #aaa; margin-bottom: 16px; }
+.auth-form { display: flex; flex-direction: column; gap: 12px; }
+.auth-form input { width: 100%; box-sizing: border-box; background: #2a2a2a; border: 1px solid var(--border-color); color: white; padding: 12px; border-radius: 6px; }
+.auth-row { display: flex; gap: 10px; }
+.auth-row input { flex: 1; }
+.password-field { position: relative; }
+.password-field input { padding-right: 44px; }
+.eye-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #aaa; cursor: pointer; }
+.role-choice { display: flex; gap: 16px; align-items: center; color: #ccc; }
+.auth-submit { width: 100%; margin-top: 4px; }
+.status-message { margin-top: 12px; color: var(--primary-accent); font-size: 14px; }
+.field-block { display:flex; flex-direction:column; gap:4px; }
+.error-text { color:#ff8a80; font-size:12px; }
+.helper-text { color:#888; font-size:12px; }
+.auth-footer { margin-top: 12px; font-size: 14px; color: #aaa; }
+.auth-footer a, .auth-footer router-link { color: var(--primary-accent); text-decoration: none; }
 </style>
